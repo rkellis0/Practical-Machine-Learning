@@ -1,0 +1,112 @@
+---
+title: "Practical Machine Learning"
+author: "Ricky Ellison"
+date: "May 23, 2016"
+output: html_document
+---
+
+#Goal
+
+The goal of this project is to predict the manner in which participants did the exercise. This report describes how the weight lifting data was analysed and the prediction model generated. The prediction model was used successfully to accurately predict all 20 different test cases on the Coursera website.
+
+#Loading Libraies
+
+```{r}
+library(ggplot2)
+library(caret)
+library(randomForest)
+library(splines)
+library(gbm)
+library(plyr)
+library(MASS)
+```
+
+##Load Data
+
+set working directory to where files are located or download from:
+
+Train data: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+Test data: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+```{r}
+inttrain <- read.csv("pml-training.csv", header=TRUE, na.strings = c("","NA"))
+inttest <- read.csv("pml-testing.csv", header=TRUE, na.strings = c("","NA"))
+```
+
+##Data Analysis
+
+```{r}
+dim(inttrain)
+dim(inttest)
+```
+
+There are 160 variables and in order to continue preparing our data for further analysis we need to remove NA's, incomplete data sets, and data that contains unmeasureable values.
+
+```{r}
+nacount <- sapply(inttrain, function(n) sum(length(which(is.na(n)))))
+nzv <- nearZeroVar(inttrain, saveMetrics = TRUE)
+```
+
+Remove variables with high NA's and non-measureable variables
+```{r}
+traindata <- inttrain[,(!nzv$nzv & nacount < 19216)]
+traindata <- traindata[,-c(1:6)]
+```
+
+##Split Training data into train and test data for cross valdiation
+
+```{r}
+set.seed(1254)
+
+trainsplit <- createDataPartition(traindata$classe, p=0.7, list = FALSE)
+setTraining <- traindata[trainsplit,]
+setTesting <- traindata[-trainsplit,]
+```
+
+##Model Training
+
+```{r}
+fitControl <- trainControl(method="cv", number = 5, allowParallel = TRUE)
+
+fitRF <- train(classe ~ ., data=setTraining, method="rf", trControl = fitControl)
+
+fitLDA <- train(classe ~ ., data=setTraining, method="lda", trControl = fitControl)
+
+fitGBM <- train(classe ~ ., data=setTraining, method="gbm", trControl = fitControl, verbose = FALSE)
+```
+
+##Model Prediction
+```{r}
+predictRF1 <- predict(fitRF, setTraining)
+confusionMatrix(predictRF1, setTraining$classe)$overall[1]
+
+predictGBM1 <- predict(fitGBM, setTraining)
+confusionMatrix(predictGBM1, setTraining$classe)$overall[1]
+
+
+predictLDA1 <- predict(fitLDA, setTraining)
+confusionMatrix(predictLDA1, setTraining$classe)$overall[1]
+```
+Based on the results from our prediction randomForest model had the best accuracy, followed by boosting, then linear discriminant analysis.
+
+##Test Data
+
+```{r}
+predictRF2 <- predict(fitRF, setTesting)
+confusionMatrix(predictRF2, setTesting$classe)$overall[1]
+
+predictGBM2 <- predict(fitGBM, setTesting)
+confusionMatrix(predictGBM2, setTesting$classe)$overall[1]
+
+predictLDA2 <- predict(fitLDA, setTesting)
+confusionMatrix(predictLDA2, setTesting$classe)$overall[1]
+```
+Applying our prediction models on the test model resulted in the same accuracy prediction with randomForest model being the best fit.
+
+##Final Test
+```{r}
+predictRF3 <- predict(fitRF, inttest)
+predictRF3
+```
+
