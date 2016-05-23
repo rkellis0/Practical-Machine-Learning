@@ -36,7 +36,7 @@ inttest <- read.csv("pml-testing.csv", header=TRUE, na.strings = c("","NA"))
 
 ##Data Analysis
 
-```{r}
+```{r, echo=TRUE}
 dim(inttrain)
 dim(inttest)
 ```
@@ -77,7 +77,7 @@ fitGBM <- train(classe ~ ., data=setTraining, method="gbm", trControl = fitContr
 ```
 
 ##Model Prediction
-```{r}
+```{r, echo=TRUE}
 predictRF1 <- predict(fitRF, setTraining)
 confusionMatrix(predictRF1, setTraining$classe)$overall[1]
 
@@ -92,7 +92,7 @@ Based on the results from our prediction randomForest model had the best accurac
 
 ##Test Data
 
-```{r}
+```{r, echo=TRUE}
 predictRF2 <- predict(fitRF, setTesting)
 confusionMatrix(predictRF2, setTesting$classe)$overall[1]
 
@@ -105,7 +105,7 @@ confusionMatrix(predictLDA2, setTesting$classe)$overall[1]
 Applying our prediction models on the test model resulted in the same accuracy prediction with randomForest model being the best fit.
 
 ##Final Test
-```{r}
+```{r, echo=TRUE}
 predictRF3 <- predict(fitRF, inttest)
 predictRF3
 ```
